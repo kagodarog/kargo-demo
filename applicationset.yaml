@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+  labels:
+    k8slens-edit-resource-version: v1alpha1
+  name: kargo-demo
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - stage: test
+          - stage: uat
+          - stage: prod
+  template:
+    metadata:
+      annotations:
+        kargo.akuity.io/authorized-stage: kargo-demo:{{stage}}
+      name: kargo-demo-{{stage}}
+    spec:
+      destination:
+        namespace: kargo-demo-{{stage}}
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: .
+        repoURL: https://github.com/kagodarog/kargo-demo.git
+        targetRevision: stage/{{stage}}
+      syncPolicy:
+        automated:
+          allowEmpty: false
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - Validate=true
+          - CreateNamespace=true
+          - PrunePropagationPolicy=foreground
+          - PruneLast=true

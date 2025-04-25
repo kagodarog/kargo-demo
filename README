@@ -1,0 +1,23 @@
+# Set up the environment
+
+To get started, you will need a GitHub personal access token with adequate permissions to read from and write to the repository you forked in the previous section.
+
+Save your GitHub handle and your personal access token in environment variables:
+
+export GITHUB_USERNAME=<your github handle>
+export GITHUB_PAT=<your personal access token>
+export GITHUB_REPO=<your github repo
+
+# Create ArgoCD application resources
+
+```kubectl apply -f application.yaml```
+
+we will use an Argo CD ApplicationSet resource to create and manage three Argo CD Application resources that deploy the sample application at three different stages of its lifecycle, with three slightly different configurations, to three different namespaces in our local cluster:
+
+# Run the script to set up the environment:
+
+```bash
+./initial-kargo-install.sh
+```
+
+Navigate to the Argo CD UI  and log in with the username and password which you can find in the secret in argocd namespace. You should see three applications, one for each stage of the application lifecycle. Click on each application to see its details and the resources it manages.
