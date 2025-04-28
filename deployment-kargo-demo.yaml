@@ -13,7 +13,7 @@ spec:
         app: kargo-demo
     spec:
       containers:
-      - image: public.ecr.aws/nginx/nginx:1.27.5
+      - image: public.ecr.aws/nginx/nginx:1.28.0
         name: nginx
         volumeMounts:
         - mountPath: /usr/share/nginx/html
