@@ -6,22 +6,32 @@ metadata:
     k8slens-edit-resource-version: v1alpha1
   name: kargo-demo
   namespace: argocd
+  finalizers: 
+    - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-    - list:
-        elements:
-          - stage: test
-          - stage: uat
-          - stage: prod
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - stage: test
+                - stage: uat
+                - stage: prod
+
+          - clusters: {}
+              # selector:
+              #   matchLabels:
+              #     argocd.argoproj.io/secret-type: cluster
+
   template:
     metadata:
       annotations:
         kargo.akuity.io/authorized-stage: kargo-demo:{{stage}}
-      name: kargo-demo-{{stage}}
+      name: kargo-demo-{{stage}}-{{name}}
     spec:
       destination:
         namespace: kargo-demo-{{stage}}
-        server: https://kubernetes.default.svc
+        server: '{{server}}'
       project: default
       source:
         path: .
