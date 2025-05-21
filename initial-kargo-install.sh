@@ -39,7 +39,7 @@ helm install argo-rollouts argo-rollouts \
   --wait
 
 # Password is 'admin'
-helm install kargo \
+helm upgrade --install kargo \
   oci://ghcr.io/akuity/kargo-charts/kargo \
   --namespace kargo \
   --create-namespace \
@@ -60,19 +60,28 @@ export GITOPS_REPO_URL=<your gitops repo url> with https://
 curl -L https://raw.githubusercontent.com/akuity/kargo/main/hack/quickstart/install.sh | sh
 
 
-
 cat <<EOF | kubectl apply -f -
 apiVersion: kargo.akuity.io/v1alpha1
 kind: Project
 metadata:
   name: kargo-demo
-spec:
-  promotionPolicies:
-    - stage: test
-      autoPromotionEnabled: true
-
 
 ---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: ProjectConfig
+metadata:
+  name: kargo-demo
+  namespace: kargo-demo
+spec:
+  promotionPolicies:
+  - stageSelector:
+      name: test
+    autoPromotionEnabled: true
+  - stageSelector:
+      name: uat
+    autoPromotionEnabled: true
+
+--- 
 apiVersion: v1
 kind: Secret
 type: Opaque
@@ -123,7 +132,7 @@ spec:
     config:
       path: ./out
   - uses: kustomize-set-image
-    as: update-image
+    as: update
     config:
       path: ./src/base
       images:
@@ -137,15 +146,21 @@ spec:
     as: commit
     config:
       path: ./out
-      messageFromSteps:
-      - update-image
+      message: "Update image to \${{ imageFrom(vars.imageRepo).Tag }} by kargo"
   - uses: git-push
     config:
       path: ./out
   - uses: argocd-update
     config:
       apps:
-      - name: kargo-demo-\${{ ctx.stage }}
+      - name: kargo-demo-\${{ ctx.stage }}-in-cluster
+        sources:
+        - repoURL: \${{ vars.gitopsRepo }}
+          desiredRevision: \${{ task.outputs.commit.commit }}
+  - uses: argocd-update
+    config:
+      apps:
+      - name: kargo-demo-\${{ ctx.stage }}-minikube
         sources:
         - repoURL: \${{ vars.gitopsRepo }}
           desiredRevision: \${{ task.outputs.commit.commit }}
